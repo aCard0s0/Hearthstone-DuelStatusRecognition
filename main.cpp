@@ -19,28 +19,37 @@ char* window_name = (char*)"Edge Map";
 
 
 
+
+//cv::Mat IMAGES[] = {
+//	cv::imread("resources/1920x1080/druid_v.png"),
+//	cv::imread("resources/1920x1080/hunter_v.png"),
+//	cv::imread("resources/1920x1080/mage_v.png"),
+//	cv::imread("resources/1920x1080/paladin_v.png"),
+//	cv::imread("resources/1920x1080/priest_v.png"),
+//	cv::imread("resources/1920x1080/rogue_v.png"),
+//	cv::imread("resources/1920x1080/warlock_v.png")
+//};
+
+
 /*
-cv::Mat images[] = {	
+	The list of images to be analyzed
+*/
+cv::Mat IMAGES[] = {
+	
 	cv::imread("resources/1920x1080/druid_v.png"),
 	cv::imread("resources/1920x1080/hunter_v.png"),
 	cv::imread("resources/1920x1080/mage_v.png"),
 	cv::imread("resources/1920x1080/paladin_v.png"),
 	cv::imread("resources/1920x1080/priest_v.png"),
 	cv::imread("resources/1920x1080/rogue_v.png"),
-	cv::imread("resources/1920x1080/warlock_v.png")
-};
-*/
+	cv::imread("resources/1920x1080/warlock_v.png"),
 
-/*
-	The list of images to be analyzed
-*/
-cv::Mat IMAGES[] = {
-	/*cv::imread("resources/1280x720/resized_druid_v.png"),
+	cv::imread("resources/1280x720/resized_druid_v.png"),
 	cv::imread("resources/1280x720/resized_hunter_v.png"),
-	cv::imread("resources/1280x720/resized_mage_v.png"),*/
-	/*cv::imread("resources/1280x720/druid_v.jpg"),
+	cv::imread("resources/1280x720/resized_mage_v.png"),
+	cv::imread("resources/1280x720/druid_v.jpg"),
 	cv::imread("resources/1280x720/hunter_v.jpg"),
-	cv::imread("resources/1280x720/mage_v.jpg"),*/
+	cv::imread("resources/1280x720/mage_v.jpg"),
 	cv::imread("resources/1280x720/resized_druid_d.png"),
 	cv::imread("resources/1280x720/resized_hunter_d.png"),
 	cv::imread("resources/1280x720/resized_mage_d.png"),
@@ -55,7 +64,7 @@ int const NUM_IMAGES = (int)(sizeof(IMAGES) / sizeof(IMAGES[0]));
 	Template of the classes
 */
 cv::Mat CLASS_TEMPLATES[] = {
-	cv::imread("resources/icons/druid_icon.png"),
+	/*cv::imread("resources/icons/druid_icon.png"),
 	cv::imread("resources/icons/hunter_icon.png"),
 	cv::imread("resources/icons/mage_icon.png"),
 	cv::imread("resources/icons/paladin_icon.png"),
@@ -63,7 +72,16 @@ cv::Mat CLASS_TEMPLATES[] = {
 	cv::imread("resources/icons/rogue_icon.png"),
 	cv::imread("resources/icons/warlock_icon.png"),
 	cv::imread("resources/icons/warrior_icon.png"),
-	cv::imread("resources/icons/shaman_icon.png")
+	cv::imread("resources/icons/shaman_icon.png")*/
+	cv::imread("resources/icons/Druid_canny.jpg"),
+	cv::imread("resources/icons/Hunter_canny.jpg"),
+	cv::imread("resources/icons/Mage_canny.jpg"),
+	cv::imread("resources/icons/Paladin_canny.jpg"),
+	cv::imread("resources/icons/Priest_canny.jpg"),
+	cv::imread("resources/icons/Rogue_canny.jpg"),
+	cv::imread("resources/icons/Warlock_canny.jpg"),
+	cv::imread("resources/icons/Warrior_canny.jpg"),
+	cv::imread("resources/icons/Shaman_canny.jpg")
 };
 int const NUM_CLASSES = (int)(sizeof(CLASS_TEMPLATES) / sizeof(CLASS_TEMPLATES[0]));
 
@@ -71,15 +89,15 @@ int const NUM_CLASSES = (int)(sizeof(CLASS_TEMPLATES) / sizeof(CLASS_TEMPLATES[0
 	Templates for "Victory" and "Defeat"
 */
 cv::Mat RESULT_TEMPLATES[] = {
-	cv::imread("resources/icons/victory_icon.jpg"),
-	cv::imread("resources/icons/defeat_icon.png")
+	cv::imread("resources/icons/victory_canny.png"),
+	cv::imread("resources/icons/defeat_canny.png")
 };
-
+int const NUM_RESULTS = (int)(sizeof(RESULT_TEMPLATES) / sizeof(RESULT_TEMPLATES[0]));
 
 /* 
 	Methods used on the template matching
 */
-int MATCH_METHODS[] = { /*cv::TM_CCORR_NORMED , cv::TM_CCOEFF,*/ cv::TM_CCOEFF_NORMED };
+int MATCH_METHODS[] = { cv::TM_CCOEFF_NORMED /*, cv::TM_CCORR_NORMED , cv::TM_CCOEFF,*/ };
 int const NUM_METHODS = (int)(sizeof(MATCH_METHODS) / sizeof(MATCH_METHODS[0]));
 
 /* 
@@ -120,23 +138,20 @@ string get_class_name (int i)
 }
 
 
-cv::Mat to_canny(cv::Mat original)
+cv::Mat apply_canny(cv::Mat original, int low_threshold = 86, int thresh_ratio = 3)
 {
 	// Convert the image to grayscale
 	cv::Mat image_gray;
 	cvtColor(original, image_gray, cv::COLOR_RGB2GRAY);
 
 	// Reduce noise with a kernel 3x3
-	//cv::Mat detected_edges;
-	//cv::blur(image_gray, detected_edges, cv::Size(3, 3));
-	cv::Mat detected_edges = image_gray; // DEBUG -------------------
+	cv::Mat detected_edges;
+	cv::blur(image_gray, detected_edges, cv::Size(3, 3));
 
 	// Canny detector
-	int low_threshold = 86;
 	//int low_threshold = global_low_threshold; // DEBUG -------------------------
-	int thrsh_ratio = 3;
 	int kernel_size = 3;
-	cv::Canny(detected_edges, detected_edges, low_threshold, low_threshold * thrsh_ratio, kernel_size);
+	cv::Canny(detected_edges, detected_edges, low_threshold, low_threshold * thresh_ratio, kernel_size);
 
 	// Using Canny's output as a mask, we display our result
 	cv::Mat img_canny;
@@ -144,6 +159,57 @@ cv::Mat to_canny(cv::Mat original)
 	original.copyTo(img_canny, detected_edges);
 
 	return img_canny;
+}
+
+
+/*
+
+	type:
+		0 = class icon
+		1 = result
+*/
+cv::Point get_image_center(cv::Mat image, int type)
+{
+	
+	// Templates used are rectangles
+	// Part of the class icon is cropped because it has curves
+	int y_offset;
+	// The vertical center of the class image in comparison with the full image height
+	double placement_ratio;
+
+	if (type == 0)
+	{
+		y_offset = 20;
+		placement_ratio = 0.375;
+	}
+	else
+	{
+		y_offset = 0;
+		placement_ratio = 0.5805;
+	}
+	
+	cv::Point img_center;
+	img_center.x = (int)(image.cols / 2);
+	img_center.y = (int)(image.rows * placement_ratio) + y_offset;
+
+	return img_center;
+}
+
+
+/*
+	Best matched template
+*/
+void get_best_match(double worst_case, int *tmpl_matched, double templ_score[], int size)
+{
+	double best_val = worst_case;
+	for (int tmpl_idx = 0; tmpl_idx < size; tmpl_idx++)
+	{
+		if (templ_score[tmpl_idx] < best_val)
+		{
+			best_val = templ_score[tmpl_idx];
+			*tmpl_matched = tmpl_idx;
+		}
+	}
 }
 
 
@@ -156,104 +222,92 @@ void template_match_class(int, void*)
 
 	for (int idx = 0; idx < NUM_IMAGES; idx++)
 	{
-
 		cv::Mat original_img = IMAGES[idx].clone();
-		cv::Mat img_canny = to_canny(IMAGES[idx]);
 
-		//for (int tmpl_idx = idx; tmpl_idx == idx; tmpl_idx++) ----------------DEBUG
+		// Validate and correct dimensions
+		if (original_img.rows != 720)
+		{
+			int new_width = (original_img.cols * 720) / original_img.rows;
+			cv::resize(original_img, original_img, cv::Size(new_width, 720));
+		}
+
+		cv::imshow(window_name, original_img);
+
+		// The center of the class icon
+		cv::Point img_center = get_image_center(original_img, 0);
+
+		// Apply canny filter
+		cv::Mat img_canny = apply_canny(original_img);
+		
+		// Use template matching with all class templates
 		for (int tmpl_idx = 0; tmpl_idx < NUM_CLASSES; tmpl_idx++)
 		{
 			// Create the result matrix
 			cv::Mat result;
-			int result_cols = original_img.cols - CLASS_TEMPLATES[tmpl_idx].cols + 1;
-			int result_rows = original_img.rows - CLASS_TEMPLATES[tmpl_idx].rows + 1;
+			cv::Mat tmpl = CLASS_TEMPLATES[tmpl_idx];
+
+			int result_cols = original_img.cols - tmpl.cols + 1;
+			int result_rows = original_img.rows - tmpl.rows + 1;
 			result.create(result_rows, result_cols, CV_32FC1);
 
 			// Create canny template
-			cv::Mat canny_template;
-			canny_template = to_canny(CLASS_TEMPLATES[tmpl_idx]);
+			//cv::Mat canny_template;
+			//canny_template = to_canny(CLASS_TEMPLATES[tmpl_idx]);
+			//canny_template = CLASS_TEMPLATES[tmpl_idx];
 			
+			// Write to file
+			//string fn = "resources/icons/" + get_class_name(tmpl_idx) + "_canny.jpg";
+			//cv::imwrite(fn, canny_template);
+
 			// Do the matching
-			int match_method = MATCH_METHODS[0];
-			cv::matchTemplate(img_canny, canny_template, result, match_method);
+			//cv::matchTemplate(img_canny, canny_template, result, MATCH_METHODS[0]);
+			cv::matchTemplate(img_canny, tmpl, result, MATCH_METHODS[0]);
 
 			// Localizing the best match with minMaxLoc
-			double min_val; double max_val;
-			cv::Point min_loc; cv::Point max_loc;
-			cv::Point match_loc;
-			minMaxLoc(result, &min_val, &max_val, &min_loc, &max_loc, cv::Mat());
+			double min_val, match_val;
+			cv::Point min_loc, max_loc, match_loc;
 
-			// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
-			double result_val;
-			if (match_method == cv::TM_SQDIFF || match_method == cv::TM_SQDIFF_NORMED)
-			{
-				match_loc = min_loc;
-				result_val = min_val;
-			}
-			else
-			{
-				match_loc = max_loc;
-				result_val = max_val;
-			}
-
-			// We dont use the icon from the top 
-			// Because templates used are rectangles and the class icons have curves
-			// So an offset is used
-			int y_offset = 10;
-
-			// The center of the class icon
-			cv::Point img_center;
-			img_center.x = (int) (img_canny.cols / 2);
-			img_center.y = (int) (img_canny.rows * 0.375) + y_offset;  
-
+			minMaxLoc(result, &min_val, &match_val, &min_loc, &max_loc, cv::Mat());
+			match_loc = max_loc;
+			
 			// Template center
-			cv::Point templ_center;
-			templ_center.x = (int) (canny_template.cols / 2 + match_loc.x);
-			templ_center.y = (int) (canny_template.rows / 2 + match_loc.y);
+			cv::Point tmpl_center;
+			tmpl_center.x = (int) (tmpl.cols / 2 + match_loc.x);
+			tmpl_center.y = (int) (tmpl.rows / 2 + match_loc.y);
 
 			// Distance from template center to class icon center
-			double distance = sqrt( abs(img_center.x - templ_center.x)^2 + abs(img_center.y - templ_center.y)^2 );
+			double distance = sqrt( pow(abs(img_center.x - tmpl_center.x),2) + pow(abs(img_center.y - tmpl_center.y),2) );
 
 			// Info output
-			cout << "Image[" << idx << "]: " << get_class_name(idx) << endl;
 			cout << "Template[" << tmpl_idx << "]: " << get_class_name(tmpl_idx) << endl;
-			//cout << "Method[" << match_method << "]: " << match_method_name(match_method) << endl;
-			//cout << "Thresh: " << global_low_threshold << endl;
-			cout << "max_val: " << max_val << endl;
+			cout << "max_val: " << match_val << endl;
 			cout << "Distance to center: " << distance << endl;
+			cout << "score: " << distance - match_val * 10 << endl;
 			cout << "----------------" << endl;
 
 			// Visual output
-			/*cv::Mat display_img = original_img.clone();
-			cv::rectangle(display_img, matchLoc, cv::Point(matchLoc.x + canny_template.cols, matchLoc.y + canny_template.rows), cv::Scalar::all(0), 2, 8, 0);
+			/*
+			cv::Mat display_img = original_img.clone();
+			cv::rectangle(display_img, match_loc, cv::Point(match_loc.x + tmpl.cols, match_loc.y + tmpl.rows), cv::Scalar::all(0), 2, 8, 0);
 			cv::imshow(window_name, display_img);
-			cv::imshow("canny img", img_canny);
-			cv::imshow("canny templ", canny_template); */
+			//cv::imshow("canny img", img_canny);
+			cv::imshow("templ", CLASS_TEMPLATES[tmpl_idx]); 
+			cv::waitKey(0);
+			*/
 			// Save result
-			templ_score[tmpl_idx] = distance;
-
-			// Pause before next template
-			//cv::waitKey(0);	
+			templ_score[tmpl_idx] = distance - match_val * 10;
 		}
 
-		double best_val = original_img.cols;
 		int tmpl_matched;
-		for (int tmpl_idx = 0; tmpl_idx < NUM_CLASSES; tmpl_idx++)
-		{
-			double score = templ_score[tmpl_idx];
-			if (score < best_val)
-			{
-				best_val = score;
-				tmpl_matched = tmpl_idx;
-			}
-		}
-		
-		cout << "Prediction: " << tmpl_matched << endl;
-		cout << "#######################" << endl;
+		get_best_match((double)original_img.cols, &tmpl_matched, templ_score, NUM_CLASSES);
+
+		cout << "Prediction: " << get_class_name(tmpl_matched) << "(" << tmpl_matched << ")" << endl;
+		cout << "\n#######################\n" << endl;
 		// Pause before next image
 		cv::waitKey(0);
 	}
 }
+
 
 
 /*
@@ -261,104 +315,99 @@ void template_match_class(int, void*)
 */
 void template_match_result(int, void*)
 {
-	// Victory / Defeat
-	double templ_score[2];
+	double templ_score[NUM_RESULTS];
 
+	// Analyze each image
 	for (int idx = 0; idx < NUM_IMAGES; idx++)
 	{
 		cv::Mat original_img = IMAGES[idx].clone();
-		cv::Mat img_canny = to_canny(IMAGES[idx]);
 
-		for (int tmpl_idx = 0; tmpl_idx < 2; tmpl_idx++)
+		// Validate and correct dimensions
+		if (original_img.rows != 720)
+		{
+			int new_width = (original_img.cols * 720) / original_img.rows;
+			cv::resize(original_img, original_img, cv::Size(new_width, 720));
+		}
+
+		cv::imshow(window_name, original_img);
+
+		// The center of the result icon
+		cv::Point img_center = get_image_center(original_img, 1);
+
+		// Apply canny filter
+		cv::Mat img_canny = apply_canny(original_img);
+
+		// Use template matching with victory/defeat templates
+		for (int tmpl_idx = 0; tmpl_idx < NUM_RESULTS; tmpl_idx++)
 		{
 			// Create the result matrix
 			cv::Mat result;
-			int result_cols = original_img.cols - RESULT_TEMPLATES[tmpl_idx].cols + 1;
-			int result_rows = original_img.rows - RESULT_TEMPLATES[tmpl_idx].rows + 1;
+			cv::Mat tmpl = RESULT_TEMPLATES[tmpl_idx];
+
+			int result_cols = original_img.cols - tmpl.cols + 1;
+			int result_rows = original_img.rows - tmpl.rows + 1;
 			result.create(result_rows, result_cols, CV_32FC1);
 
-			// Create canny template
-			cv::Mat canny_template;
-			canny_template = to_canny(RESULT_TEMPLATES[tmpl_idx]);
+			//Create canny template
+			//cv::Mat canny_template;
+			//canny_template = apply_canny(RESULT_TEMPLATES[tmpl_idx]);
+			//canny_template = RESULT_TEMPLATES[tmpl_idx];
+
+			// Write to file
+			//string vd = "defeat";
+			//if (tmpl_idx == 0)
+			//	vd = "victory";
+
+			//string fn = "resources/icons/" + vd + "_canny.png";
+			//cv::imwrite(fn, canny_template);
 
 			// Do the matching
-			int match_method = MATCH_METHODS[0];
-			cv::matchTemplate(img_canny, canny_template, result, match_method);
+			//cv::matchTemplate(img_canny, canny_template, result, MATCH_METHODS[0]);
+			cv::matchTemplate(img_canny, tmpl, result, MATCH_METHODS[0]);
 
 			// Localizing the best match with minMaxLoc
-			double min_val; double max_val;
-			cv::Point min_loc; cv::Point max_loc;
-			cv::Point match_loc;
-			minMaxLoc(result, &min_val, &max_val, &min_loc, &max_loc, cv::Mat());
+			double min_val, match_val;
+			cv::Point min_loc, max_loc, match_loc;
 
-			// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
-			double result_val;
-			if (match_method == cv::TM_SQDIFF || match_method == cv::TM_SQDIFF_NORMED)
-			{
-				match_loc = min_loc;
-				result_val = min_val;
-			}
-			else
-			{
-				match_loc = max_loc;
-				result_val = max_val;
-			}
-
-			// The center of the result icon
-			cv::Point img_center;
-			img_center.x = (int)(img_canny.cols / 2);
-			img_center.y = (int)(img_canny.rows * 0.5805);
+			minMaxLoc(result, &min_val, &match_val, &min_loc, &max_loc, cv::Mat());
+			match_loc = max_loc;
 
 			// Template center
-			cv::Point templ_center;
-			templ_center.x = (int)(canny_template.cols / 2 + match_loc.x);
-			templ_center.y = (int)(canny_template.rows / 2 + match_loc.y);
+			cv::Point tmpl_center;
+			tmpl_center.x = (int)(tmpl.cols / 2 + match_loc.x);
+			tmpl_center.y = (int)(tmpl.rows / 2 + match_loc.y);
 
 			// Distance from template center to class icon center
-			double distance = sqrt(abs(img_center.x - templ_center.x) ^ 2 + abs(img_center.y - templ_center.y) ^ 2);
+			double distance = sqrt(pow(abs(img_center.x - tmpl_center.x), 2) + pow(abs(img_center.y - tmpl_center.y), 2));
 
 			// Info output
-			cout << "Image[" << idx << "]: " << get_class_name(idx) << endl;
-			cout << "victory(0) / defeat(1) : " << tmpl_idx << endl;
-			//cout << "Method[" << match_method << "]: " << match_method_name(match_method) << endl;
-			cout << "max_val: " << max_val << endl;
-			cout << "Thresh: " << global_low_threshold << endl;
+			cout << "Template: " << tmpl_idx << " --- (0=vic,1=def)" << endl;
+			cout << "max_val: " << match_val << endl;
 			cout << "Distance to center: " << distance << endl;
+			cout << "score: " << distance - match_val * 10 << endl;
 			cout << "----------------" << endl;
 
 			// Visual output
+			
 			cv::Mat display_img = original_img.clone();
-			cv::rectangle(display_img, match_loc, cv::Point(match_loc.x + canny_template.cols, match_loc.y + canny_template.rows), cv::Scalar::all(0), 2, 8, 0);
+			cv::rectangle(display_img, match_loc, cv::Point(match_loc.x + tmpl.cols, match_loc.y + tmpl.rows), cv::Scalar::all(0), 2, 8, 0);
 			cv::imshow(window_name, display_img);
-			cv::imshow("canny img", img_canny);
-			cv::imshow("canny templ", canny_template);
-
+			//cv::imshow("canny img", img_canny);
+			cv::imshow("templ", RESULT_TEMPLATES[tmpl_idx]);
+			
 			// Save result
-			templ_score[tmpl_idx] = distance;
-
-			// Pause before next template
-			//cv::waitKey(0);	
+			templ_score[tmpl_idx] = distance - match_val * 10;
+			cv::waitKey(0);
 		}
 
-		double best_val = original_img.cols;
 		int tmpl_matched;
-		for (int tmpl_idx = 0; tmpl_idx < 2; tmpl_idx++)
-		{
-			double score = templ_score[tmpl_idx];
-			if (score < best_val)
-			{
-				best_val = score;
-				tmpl_matched = tmpl_idx;
-			}
-		}
-		string res;
-		if (tmpl_matched == 0)
-			res = "Victory";
-		else
-			res = "Defeat";
+		get_best_match((double)original_img.cols, &tmpl_matched, templ_score, NUM_RESULTS);
 
-		cout << "Prediction: " << res << endl;
-		cout << "#######################" << endl;
+		string prediction = "Victory";
+		if (tmpl_matched == 1)
+			prediction = "Defeat";
+		cout << "Prediction: " << prediction << " (" << tmpl_matched << ")" << endl;
+		cout << "\n#######################\n" << endl;
 		// Pause before next image
 		cv::waitKey(0);
 	}
@@ -381,8 +430,8 @@ int main(int argc, char** argv)
 	cv::createTrackbar(trackbar_label, window_name, &global_match_method, max_trackbar, template_match_result);
 
 	// Matching
-	template_match_result(0, 0);
-	//template_match_class(0, 0);
+	//template_match_result(0, 0);
+	template_match_class(0, 0);
 
 	// Wait for user input to exit
 	cv::waitKey(0);
